@@ -10,7 +10,7 @@ The goal: make it **easy to experiment locally** with Zero123++ in a familiar, r
 
 ## Motivation — Multi-View from One Image
 
-[Zero123++](https://github.com/cvlab-columbia/zero123) is an **image-conditioned diffusion model** that generates **six consistent views** of a 3D object from a single input image.  
+[Zero123++](https://github.com/cvlab-columbia/zero123) (Zero-1-to-3)is an **image-conditioned diffusion model** that generates **six consistent views** of a 3D object from a single input image.  
 
 This enables:
 - **Rapid 3D asset creation** for simulation, robotics, AR/VR
@@ -164,7 +164,30 @@ Notice: `custom.yaml` is used as defaults, overriden by cli arguments.
 
 ---
 
+## 📖 Citation
+
+If you use **zero-mv** or build upon it in your research, please cite the original Zero-1-to-3 work:
+
+```bibtex
+@misc{liu2023zero1to3,
+      title        = {Zero-1-to-3: Zero-shot One Image to 3D Object},
+      author       = {Ruoshi Liu and Rundi Wu and Basile Van Hoorick and Pavel Tokmakov and Sergey Zakharov and Carl Vondrick},
+      year         = {2023},
+      eprint       = {2303.11328},
+      archivePrefix= {arXiv},
+      primaryClass = {cs.CV}
+}
+````
+
+**Reference:**
+Ruoshi Liu, Rundi Wu, Basile Van Hoorick, Pavel Tokmakov, Sergey Zakharov, and Carl Vondrick.
+*Zero-1-to-3: Zero-shot One Image to 3D Object*. arXiv:2303.11328, 2023.
+\[[arXiv](https://arxiv.org/abs/2303.11328)]
+
+---
+
 ## License
+
 
 MIT © 2025 zero-mv contributors
 
