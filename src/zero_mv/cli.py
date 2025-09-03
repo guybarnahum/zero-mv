@@ -1,18 +1,25 @@
 from __future__ import annotations
 import warnings
 
-# Silence Transformers' deprecation about old pytree registration API
+# Silence Transformers pytree deprecation
 warnings.filterwarnings(
     "ignore",
-    message=r".*torch\.utils\._pytree\._register_pytree_node is deprecated.*",
-    category=UserWarning,
+    message=r".*torch\.utils\._pytree\._register_pytree_node.*",
+    category=FutureWarning,
 )
 
-# Silence huggingface_hub FutureWarning about resume_download
+# Silence huggingface_hub resume_download
 warnings.filterwarnings(
     "ignore",
-    message=r".*`resume_download` is deprecated.*",
+    message=r".*resume_download.*",
     category=FutureWarning,
+)
+
+# Silence extra keys in config.json
+warnings.filterwarnings(
+    "ignore",
+    message=r".*were passed to UNet2DConditionModel.*",
+    category=UserWarning,
 )
 
 from pathlib import Path
