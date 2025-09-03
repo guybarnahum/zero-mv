@@ -9,7 +9,7 @@ version = "0.1.0"
 description = "Multi-view image generation scaffold using a pluggable Zero123++ backend."
 readme = "README.md"
 requires-python = ">=3.9"
-authors = [{name="Your Name", email="you@example.com"}]
+authors = [{name="Guy Bar-Nahum", email="guy@barnahum.com"}]
 license = { text = "MIT" }
 
 dependencies = [
