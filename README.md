@@ -59,7 +59,7 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 
 ### Clone & permissions
 ```bash
-git clone git@github.com:guybarnahum/zero-mv.git
+git clone https://github.com/guybarnahum/zero-mv.git
 cd zero-mv
 chmod +x setup.sh clean.sh
 ````
