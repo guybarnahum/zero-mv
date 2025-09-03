@@ -9,6 +9,7 @@ set -e
 # - Installs PyTorch (CPU/MPS/CUDA)
 # - Installs project in editable mode
 # - Optional HF auth
+# - Set venv alias 
 
 # ------------- Auto-yes handling -------------
 AUTO_YES=""
@@ -31,11 +32,12 @@ ask_yes_no() {
 }
 
 # ------------- Safer colors + cleanup -------------
-if tput setaf 0 >/dev/null 2>&1; then
-  COLOR_GRAY="$(tput setaf 8)"
+
+if tput setaf 7 >/dev/null 2>&1 && tput dim >/dev/null 2>&1; then
+  COLOR_GRAY="$(tput dim)$(tput setaf 7)"   # dim light gray
   COLOR_RESET="$(tput sgr0)"
 else
-  COLOR_GRAY=$'\033[90m'
+  COLOR_GRAY=$'\033[2m'                     # ANSI dim
   COLOR_RESET=$'\033[0m'
 fi
 
@@ -172,6 +174,31 @@ if [[ -n "${HF_TOKEN:-}" ]]; then
   run_and_log "Hugging Face login" huggingface-cli login --token "$HF_TOKEN" --add-to-git-credential
 fi
 
+# --- Step 8: Offer a 'venv' alias (bash/zsh only, idempotent) ---
+SHELL_NAME="$(basename "${SHELL:-}")"
+if [[ "$SHELL_NAME" == "zsh" ]]; then
+  SHELL_RC="${ZDOTDIR:-$HOME}/.zshrc"
+elif [[ "$SHELL_NAME" == "bash" ]]; then
+  SHELL_RC="$HOME/.bashrc"
+  [[ -f "$HOME/.bash_profile" && ! -f "$SHELL_RC" ]] && SHELL_RC="$HOME/.bash_profile"
+else
+  SHELL_RC="$HOME/.profile"
+fi
+
+BLOCK_START="# >>> zero-mv venv alias >>>"
+BLOCK_END="# <<< zero-mv venv alias <<<"
+
+if ! grep -qF "$BLOCK_START" "$SHELL_RC" 2>/dev/null; then
+  {
+    echo "$BLOCK_START"
+    echo "alias venv='source \"$(pwd)/.venv/bin/activate\"'"
+    echo "$BLOCK_END"
+  } >> "$SHELL_RC"
+  echo "✅ Added 'venv' alias to $SHELL_RC (run: source $SHELL_RC)"
+else
+  echo "ℹ️  'venv' alias already present in $SHELL_RC"
+fi
+
 echo
 echo "✅ Setup complete."
-echo "Activate your env with:  source ${VENV_DIR}/bin/activate"
+echo "Activate your env with:  source ${VENV_DIR}/bin/activate  (or: venv)"

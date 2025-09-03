@@ -92,11 +92,6 @@ def run(
 ):
     """
     Run Zero123++ (in-process). The model outputs a fixed 6-view rig (v1.2).
-
-    NEW:
-      - Args override config.yaml values (even when --config is used).
-      - Outputs go under {out}/{basename(image)}/
-      - File names: 000_{base}_view.png, ..., {base}_views_grid.png, {base}_views_sheet.png
     """
     t_all = time.perf_counter()
 
