@@ -1,10 +1,10 @@
 <img src="zero-mv-banner.png" width="100%"/>
 
-# Multi-View Generation with Zero123++
+# Zero-MV — Multi-View Generation with Zero123++
 
-Zero-mv wraps the [Zero123++](https://huggingface.co/sudo-ai/zero123plus-v1.2) model into a **simple, reproducible project** for generating **multi-view images** from a single input.  
+**zero-mv** wraps the [Zero123++](https://huggingface.co/sudo-ai/zero123plus-v1.2) model into a **simple project** for generating **multi-view images** from a single input.  
 
-The goal: make it **easy to experiment locally** with Zero123++ in a familiar, reproducible project structure.
+The goal: make it **easy to experiment locally** with Zero123++ in a reproducible and portable project structure.
 
 ---
 
@@ -20,28 +20,48 @@ This enables:
 Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°, 210°, 270°, 330°; elevations alternating 20° / –10°).  
 
 ---
-## Example : Teapot
+
+## Example: Teapot
 <img src="examples/teapot.jpg" width="100%"/>
 
-## Output : 6 poses of Teapot
+### Output: 6 poses of Teapot
 <img src="examples/teapot_results.png" width="100%"/>
 
-## Example : Person → 6 poses of Person
+## Example: Person → 6 poses of Person
 <img src="examples/person.jpg" width="51.225%"/><img src="examples/person_results2.png" width="48.775%"/>
+
+<details>
+<summary><h1>More Examples > </h1></summary>
+
+### Home → 6 poses
+<img src="examples/home.jpeg" width="100%"/>
+<img src="examples/home_views_grid.png" width="100%"/>
+
+### Dinosaur → 6 poses
+<img src="examples/dinosaur.jpeg" width="100%"/>
+<img src="examples/dinosaur_views_grid.png" width="100%"/>
+
+### Fish → 6 poses
+<img src="examples/fish.jpeg" width="100%"/>
+<img src="examples/fish_views_grid.png" width="100%"/>
+
+</details>
 
 ---
 
 ## Highlights
-- **Monolithic backend**: no external scripts — loads Zero123++ via Hugging Face `diffusers` pipeline
-- **Simple CLI**: `zero_mv --image input.jpg --out outputs/run`
-- **Config-driven**: pass `--config config.yaml` to avoid long CLI args
-- **Contact sheet output**: see all 6 views in one grid
+- **Monolithic backend**: no extra scripts — loads Zero123++ via Hugging Face `diffusers`
+- **Simple CLI**: `zero_mv run --image input.jpg --out outputs`
+- **Config-driven**: pass `--config config.yaml` (args always override config values)
+- **Organized outputs**: images stored under `outputs/{basename}/`
+- **Consistent naming**: `000_person_view.png … person_views_grid.png`
 - **Cross-platform**: runs on macOS (MPS), Linux CPU, and Linux CUDA (T4+)
 
 ---
 
 ## Repo Layout
 ```
+
 .
 ├── README.md
 ├── clean.sh
@@ -49,23 +69,23 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 ├── config.yaml.example
 ├── examples
 │   ├── person.jpg
-│   ├── person_results.png
-│   ├── person_results2.png
+│   ├── person\_results.png
+│   ├── person\_results2.png
 │   ├── teapot.jpg
-│   └── teapot_results.png
+│   └── teapot\_results.png
 ├── pyproject.toml
 ├── setup.sh
 ├── src
-│   └── zero_mv
-│       ├── __init__.py
-│       ├── cli.py
-│       ├── utils
-│       │   ├── cameras.py
-│       │   ├── devices.py
-│       │   └── image.py
-│       └── zero123pp.py
-│  
+│   └── zero\_mv
+│       ├── **init**.py
+│       ├── cli.py
+│       ├── utils
+│       │   ├── cameras.py
+│       │   ├── devices.py
+│       │   └── image.py
+│       └── zero123pp.py
 └── zero-mv-banner.png
+
 ````
 
 ---
@@ -104,17 +124,29 @@ The installer:
 ## Run
 
 ```bash
-# Basic run
-zero_mv --image examples/teapot.jpg --out outputs/demo
-
-# Custom steps
-zero_mv --steps 24 --image input.png --out outputs/custom
+# Basic run (teapot example)
+zero_mv run --image examples/teapot.jpg --out outputs
 ```
 
-Output:
+Output files go to `outputs/teapot/`:
 
-* `outputs/demo/zpp_grid.png` → combined grid (all 6 views)
-* `outputs/demo/000_zpp_view.png ... 005_zpp_view.png` → split tiles
+```
+outputs/teapot/
+├── 000_teapot_view.png
+├── 001_teapot_view.png
+├── 002_teapot_view.png
+├── 003_teapot_view.png
+├── 004_teapot_view.png
+├── 005_teapot_view.png
+├── teapot_views_grid.png   # model grid
+└── teapot_views_sheet.png  # contact sheet (optional)
+```
+
+### Custom steps
+
+```bash
+zero_mv run --steps 24 --image input.png --out outputs
+```
 
 ### Using a config file
 
@@ -122,7 +154,7 @@ Output:
 
 ```yaml
 image: examples/teapot.jpg
-out: outputs/from_config
+out: outputs
 steps: 28
 grid: true
 ```
@@ -133,7 +165,7 @@ Run:
 zero_mv run --config custom_config.yaml
 ```
 
-Notice: `custom.yaml` is used as defaults, overriden by cli arguments.
+> CLI args always override config values (e.g. `--steps 20` wins over YAML).
 
 ---
 
@@ -151,16 +183,16 @@ Notice: `custom.yaml` is used as defaults, overriden by cli arguments.
 
 ## Notes
 
-* **Inference steps**: `--steps` is passed to the pipeline, but some versions of Zero123++ always default to 36 steps internally.
+* **Inference steps**: Some Zero123++ pipelines still default internally to 36 steps even if fewer are requested.
 * **MPS (Mac)**: If you see “MPS out of memory,” try:
 
   ```bash
   export PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
-  zero_mv run --steps 24 --image examples/teapot.jpg --out outputs/zpp
+  zero_mv run --steps 24 --image examples/teapot.jpg --out outputs
   ```
 
-  Also reduce `--steps` (20–24) or input size (`to_square(..., min_side=256)`).
-* **Hugging Face**: If you need private models, set `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN` in .env or export into the environment before running `setup.sh`.
+  You can also lower `--steps` (20–24) or resize input (`to_square(..., min_side=256)`).
+* **Hugging Face**: For private models, set `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN` in `.env` or export it before running `setup.sh`.
 
 ---
 
@@ -177,17 +209,16 @@ If you use **zero-mv** or build upon it in your research, please cite the origin
       archivePrefix= {arXiv},
       primaryClass = {cs.CV}
 }
-````
+```
 
 **Reference:**
 Ruoshi Liu, Rundi Wu, Basile Van Hoorick, Pavel Tokmakov, Sergey Zakharov, and Carl Vondrick.
 *Zero-1-to-3: Zero-shot One Image to 3D Object*. arXiv:2303.11328, 2023.
-\[[arXiv](https://arxiv.org/abs/2303.11328)]
+[arXiv link](https://arxiv.org/abs/2303.11328)
 
 ---
 
 ## License
-
 
 MIT © 2025 zero-mv contributors
 
