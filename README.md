@@ -45,10 +45,14 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 .
 ├── README.md
 ├── clean.sh
-├── config.yaml
+├── .env.example
 ├── config.yaml.example
 ├── examples
-│   └── teapot.jpg
+│   ├── person.jpg
+│   ├── person_results.png
+│   ├── person_results2.png
+│   ├── teapot.jpg
+│   └── teapot_results.png
 ├── pyproject.toml
 ├── setup.sh
 ├── src
@@ -57,6 +61,7 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 │       ├── cli.py
 │       ├── utils
 │       │   ├── cameras.py
+│       │   ├── devices.py
 │       │   └── image.py
 │       └── zero123pp.py
 │  
