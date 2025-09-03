@@ -10,7 +10,7 @@ The goal: make it **easy to experiment locally** with Zero123++ in a familiar, r
 
 ## Motivation — Multi-View from One Image
 
-Zero123++ is an **image-conditioned diffusion model** that generates **six consistent views** of a 3D object from a single input image.  
+[Zero123++](https://github.com/cvlab-columbia/zero123) is an **image-conditioned diffusion model** that generates **six consistent views** of a 3D object from a single input image.  
 
 This enables:
 - **Rapid 3D asset creation** for simulation, robotics, AR/VR
