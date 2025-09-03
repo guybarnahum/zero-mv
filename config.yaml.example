@@ -1,0 +1,9 @@
+# config.yaml
+# values here are defaults and will be overriden by cli arguments
+#
+image: examples/teapot.jpg
+out: outputs/run
+model_id: sudo-ai/zero123plus-v1.2
+steps: 36
+grid: true
+grid_cols: 6

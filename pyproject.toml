@@ -1,0 +1,33 @@
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zero-mv"
+version = "0.1.0"
+description = "Multi-view image generation scaffold using a pluggable Zero123++ backend."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{name="Your Name", email="you@example.com"}]
+license = { text = "MIT" }
+
+dependencies = [
+  "typer>=0.12",
+  "pydantic>=2.7",
+  
+  "numpy==1.26.4",
+  "Pillow>=10.0",
+  "tqdm>=4.66",
+  "gradio>=4.36",
+  "pyyaml>=6.0",
+
+  "diffusers==0.19.3",
+  "transformers==4.36.0",
+  "huggingface_hub==0.25.2",
+  "accelerate>=0.21,<1.0",
+  "safetensors>=0.4.0",
+]
+
+[project.scripts]
+zero_mv = "zero_mv.cli:app"
