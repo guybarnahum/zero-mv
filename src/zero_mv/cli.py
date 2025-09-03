@@ -23,7 +23,8 @@ import yaml
 from PIL import Image
 
 from .utils.cameras import Pose
-from .utils.image import make_contact_sheet  # keep as in your tree
+from .utils.image import make_contact_sheet  
+from .utils.devices import pick_torch_device
 from .zero123pp import Zero123PPBackend
 
 app = typer.Typer(help="zero-mv — multi-view generation (Zero123++ backend).")
@@ -91,19 +92,20 @@ def run(
     elevations = [20, -10, 20, -10, 20, -10]
     poses: List[Pose] = [Pose(yaw=az, pitch=el, fov=30.0) for az, el in zip(azimuths, elevations)]
 
-    # Profiling: Torch import + device probe (in CLI, before backend)
+        # Profiling: Torch import + device probe via shared helper
     _echo_step("Importing Torch and probing device…")
     t1 = time.perf_counter()
     import torch  # noqa: F401
-    device = "cuda" if torch.cuda.is_available() else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")
+    device = pick_torch_device(torch)
     _echo_time(f"Torch ready on {device}", t1)
 
-    # Profiling: backend (Zero123++) init — downloads model on first run
+    # Backend init (pass device explicitly to avoid re-probing in backend)
     _echo_step(f"Initializing Zero123++ pipeline: {model_id} (first run may download weights)…")
     t2 = time.perf_counter()
     backend = Zero123PPBackend(
         model_id=model_id,
         num_inference_steps=steps,
+        device=device,
     )
     _echo_time("Zero123++ init complete", t2)
 

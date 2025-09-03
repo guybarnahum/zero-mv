@@ -5,21 +5,7 @@ from typing import Sequence, Optional, List
 from .utils.image import load_image  # save_image/annotate not needed here
 from .utils.image import to_square, try_split_grid
 from .utils.cameras import Pose
-
-
-def _pick_device() -> str:
-    try:
-        import torch  # noqa: F401
-        import torch.backends  # noqa: F401
-
-        import torch  # reimport for clarity
-        if hasattr(torch, "cuda") and torch.cuda.is_available():
-            return "cuda"
-        if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
-            return "mps"
-    except Exception:
-        pass
-    return "cpu"
+from .utils.devices import pick_torch_device
 
 
 class Zero123PPBackend:
@@ -30,9 +16,10 @@ class Zero123PPBackend:
       model_id: HF repo id (default: "sudo-ai/zero123plus-v1.2")
       dtype: "auto" | "fp16" | "fp32"  (auto = fp16 on cuda/mps, else fp32)
       scheduler: Optional scheduler name override ("EulerAncestralDiscrete" supported)
-      num_inference_steps: e.g., 28–36 for speed/quality balance; 75–100 for finer detail
+      num_inference_steps: typical 28–36; higher for finer detail
+      device: Optional device string ("cuda" | "mps" | "cpu"). If None, auto-detected.
 
-    Notes:
+      Notes:
       - Zero123++ v1.2 outputs a FIXED set of 6 views.
       - We save the combined grid (zpp_grid.png) and split tiles
         (000_zpp_view.png ... 005_zpp_view.png) directly under the run directory.
@@ -44,14 +31,17 @@ class Zero123PPBackend:
         dtype: str = "auto",
         scheduler: Optional[str] = "EulerAncestralDiscrete",
         num_inference_steps: int = 36,
+        device: Optional[str] = None,
     ):
         self.model_id = model_id
         self.num_inference_steps = int(num_inference_steps)
-        self.device = _pick_device()
-
+        
         # Heavy imports delayed until instantiation
         import torch
         from diffusers import DiffusionPipeline, EulerAncestralDiscreteScheduler
+
+        # Device: use provided or auto-pick via shared helper
+        self.device = device or pick_torch_device(torch)
 
         # Choose dtype
         if dtype == "fp16":
