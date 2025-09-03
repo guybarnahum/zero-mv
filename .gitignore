@@ -56,15 +56,5 @@ data/*
 .cache/huggingface/
 .cache/torch/
 
-# Videos & large media in repo root (avoid accidental commits)
-*.mp4
-*.mov
-*.avi
-*.mkv
-*.webm
-*.jpg
-*.jpeg
-*.png
-*.bmp
-*.gif
+
 
