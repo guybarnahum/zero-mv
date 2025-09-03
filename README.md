@@ -20,6 +20,13 @@ This enables:
 Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°, 210°, 270°, 330°; elevations alternating 20° / –10°).  
 
 ---
+## Example : Teapot
+<img src="examples/teapot.jpg" width="100%"/>
+
+## Output : 6 poses of Teapot
+<img src="examples/teapot_results.png" width="100%"/>
+
+---
 
 ## Highlights
 - **Monolithic backend**: no external scripts — loads Zero123++ via Hugging Face `diffusers` pipeline
