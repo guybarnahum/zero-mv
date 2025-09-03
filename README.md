@@ -1,10 +1,10 @@
 <img src="zero-mv-banner.png" width="100%"/>
 
-# zero-mv — Multi-View Generation with Zero123++
+# Multi-View Generation with Zero123++
 
 Zero-mv wraps the [Zero123++](https://huggingface.co/sudo-ai/zero123plus-v1.2) model into a **simple, reproducible project** for generating **multi-view images** from a single input.  
 
-The goal: make it **easy to experiment locally** with Zero123++ in a familiar, reproducible project structure (like [lora-sftuner](https://github.com/guybarnahum/lora-sftuner)).
+The goal: make it **easy to experiment locally** with Zero123++ in a familiar, reproducible project structure.
 
 ---
 
@@ -23,7 +23,7 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 
 ## Highlights
 - **Monolithic backend**: no external scripts — loads Zero123++ via Hugging Face `diffusers` pipeline
-- **Simple CLI**: `zero_mv run --image input.jpg --out outputs/run`
+- **Simple CLI**: `zero_mv --image input.jpg --out outputs/run`
 - **Config-driven**: pass `--config config.yaml` to avoid long CLI args
 - **Contact sheet output**: see all 6 views in one grid
 - **Cross-platform**: runs on macOS (MPS), Linux CPU, and Linux CUDA (T4+)
@@ -32,23 +32,25 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 
 ## Repo Layout
 ```
-
 .
-├── .gitignore
 ├── README.md
+├── clean.sh
+├── config.yaml
+├── config.yaml.example
+├── examples
+│   └── teapot.jpg
 ├── pyproject.toml
 ├── setup.sh
-├── clean.sh
-├── config.yaml.example
-├── examples/
-│   └── teapot.jpg
-└── src/zero\_mv
-├── cli.py              # Typer CLI
-├── zero123pp.py        # Backend (Zero123++ pipeline)
-└── utils/
-├── image.py
-└── cameras.py
-
+├── src
+│   └── zero_mv
+│       ├── __init__.py
+│       ├── cli.py
+│       ├── utils
+│       │   ├── cameras.py
+│       │   └── image.py
+│       └── zero123pp.py
+│  
+└── zero-mv-banner.png
 ````
 
 ---
@@ -88,10 +90,10 @@ The installer:
 
 ```bash
 # Basic run
-zero_mv run --image examples/teapot.jpg --out outputs/demo
+zero_mv --image examples/teapot.jpg --out outputs/demo
 
 # Custom steps
-zero_mv run --steps 24 --image input.png --out outputs/custom
+zero_mv --steps 24 --image input.png --out outputs/custom
 ```
 
 Output:
@@ -101,7 +103,7 @@ Output:
 
 ### Using a config file
 
-`config.yaml`:
+`custom_config.yaml`:
 
 ```yaml
 image: examples/teapot.jpg
@@ -113,8 +115,10 @@ grid: true
 Run:
 
 ```bash
-zero_mv run --config config.yaml
+zero_mv run --config custom_config.yaml
 ```
+
+Notice: `custom.yaml` is used as defaults, overriden by cli arguments.
 
 ---
 
@@ -141,7 +145,7 @@ zero_mv run --config config.yaml
   ```
 
   Also reduce `--steps` (20–24) or input size (`to_square(..., min_side=256)`).
-* **Hugging Face**: If you need private models, set `HUGGINGFACE_HUB_TOKEN` before running `setup.sh`.
+* **Hugging Face**: If you need private models, set `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN` in .env or export into the environment before running `setup.sh`.
 
 ---
 
@@ -149,8 +153,3 @@ zero_mv run --config config.yaml
 
 MIT © 2025 zero-mv contributors
 
-```
-
----
-
-Do you want me to also add a **“Profiling” section** in the README (showing your `[zero-mv]` timestamps for Torch init, pipeline load, inference), so new users know why it “pauses” for ~20s the first time?
