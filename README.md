@@ -26,7 +26,7 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 ## Output : 6 poses of Teapot
 <img src="examples/teapot_results.png" width="100%"/>
 
-## Example : Person -> 6 poses of Person
+## Example : Person → 6 poses of Person
 <img src="examples/person.jpg" width="51.225%"/><img src="examples/person_results2.png" width="48.775%"/>
 
 ---
