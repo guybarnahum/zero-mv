@@ -168,8 +168,8 @@ fi
 run_and_log "Installing zero-mv" pip install -e .
 
 # --- Step 7: Optional Hugging Face auth ---
-if [[ -n "${HUGGINGFACE_HUB_TOKEN:-}" ]]; then
-  run_and_log "Hugging Face login" huggingface-cli login --token "$HUGGINGFACE_HUB_TOKEN" --add-to-git-credential
+if [[ -n "${HF_TOKEN:-}" ]]; then
+  run_and_log "Hugging Face login" huggingface-cli login --token "$HF_TOKEN" --add-to-git-credential
 fi
 
 echo
