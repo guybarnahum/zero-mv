@@ -1,3 +1,4 @@
+from __future__ import annotations
 import warnings
 
 # Silence Transformers' deprecation about old pytree registration API
@@ -14,7 +15,6 @@ warnings.filterwarnings(
     category=FutureWarning,
 )
 
-from __future__ import annotations
 from pathlib import Path
 from typing import Optional, List
 import time
