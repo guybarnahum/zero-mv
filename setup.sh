@@ -189,7 +189,7 @@ if [[ "$VARIANT" == "cuda_gpu" ]]; then
     # operation that pip performs internally. After installation, the credential helper
     # is restored. This is the most reliable way to handle the issue in an automated script.
     run_and_log "Compiling DreamGaussian CUDA extensions" sh -c "git config --global url.\"https://\".insteadOf git:// && git config --global credential.helper \"\" && pip install --no-input git+https://github.com/ashawkey/diff-gaussian-rasterization git+https://github.com/ashawkey/simple-knn && git config --global --unset credential.helper"
-    
+
     echo "Starting DreamGaussian validation..."
     run_and_log "Running validation script" python validate_dreamgaussian.py
 else
