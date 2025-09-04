@@ -180,7 +180,7 @@ if [[ "$VARIANT" == "cuda_gpu" ]]; then
     fi
     
     run_and_log "Installing DreamGaussian dependencies (GPU)" pip install --no-input "einops>=0.7" "fire" "lpips" "plyfile" "scikit-image" "trimesh" "xatlas"   
-    run_and_log "Compiling DreamGaussian CUDA extensions" pip install --no-input "git+https://github.com/ashawkey/diff-gaussian-rasterization" "git+https://github.com/ashawkey/simple-knn"
+    run_and_log "Compiling DreamGaussian CUDA extensions" pip install --no-input --depth=1 "git+https://github.com/ashawkey/diff-gaussian-rasterization@8829d14f814fccdaf840b7b0f3021a616583c0a1" "git+https://github.com/ashawkey/simple-knn"
 
     echo "Starting DreamGaussian validation..."
     run_and_log "Running validation script" python validate_dreamgaussian.py
