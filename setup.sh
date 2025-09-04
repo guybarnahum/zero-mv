@@ -186,8 +186,12 @@ if [[ "$VARIANT" == "cuda_gpu" ]]; then
 
     run_and_log "Compiling DreamGaussian CUDA extensions" sh -c "./setup_dreamgaussian.sh"
 
-    echo "Starting DreamGaussian validation..."
-    run_and_log "Running validation script" python validate_dreamgaussian.py
+    if [[ -f "validate_dreamgaussian.py" ]]; then
+        run_and_log "Running DreamGaussian validation" python validate_dreamgaussian.py
+    else
+        echo "ℹ️  Skipping validation (validate_dreamgaussian.py not found)."
+    fi
+
 else
     echo "Skipping DreamGaussian installation for CPU/macOS."
 fi
