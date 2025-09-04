@@ -109,6 +109,9 @@ remove_artifacts() {
     logs tmp temp cache .cache
     wandb mlruns tensorboard tb_logs runs experiments
     outputs results checkpoints
+    # Add DreamGaussian specific build artifacts
+    diff-gaussian-rasterization
+    simple-knn
   )
   # Data directories you may want to keep—prompted
   MAYBE_DATA_DIRS=( data datasets )
@@ -174,4 +177,3 @@ hf_logout
 
 echo "✅ Clean complete."
 [[ -n "${DRY_RUN}" ]] && echo "(No files were deleted due to --dry-run)"
-

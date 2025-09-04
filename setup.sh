@@ -166,15 +166,30 @@ else
   esac
 fi
 
-# --- Step 6: Install project ---
+# --- Step 6: Install DreamGaussian Dependencies and compile extensions ---
+if [[ "$VARIANT" == "t4_gpu" ]]; then
+    echo "DreamGaussian requires specific CUDA extensions. Checking for 'nvcc'..."
+    if ! have nvcc; then
+        echo "❌ 'nvcc' (the CUDA compiler) is not found. Please ensure the CUDA toolkit is installed and on your PATH to compile the necessary extensions."
+        exit 1
+    fi
+    
+    run_and_log "Installing DreamGaussian dependencies (GPU)" pip install "einops>=0.7" "fire" "lpips" "plyfile" "scikit-image" "trimesh" "xatlas"
+    
+    run_and_log "Compiling DreamGaussian CUDA extensions" pip install "git+https://github.com/ashawkey/diff-gaussian-rasterization" "git+https://github.com/ashawkey/simple-knn"
+else
+    echo "Skipping Installing DreamGaussian for $VARIANT"
+fi
+
+# --- Step 7: Install project ---
 run_and_log "Installing zero-mv" pip install -e .
 
-# --- Step 7: Optional Hugging Face auth ---
+# --- Step 8: Optional Hugging Face auth ---
 if [[ -n "${HF_TOKEN:-}" ]]; then
   run_and_log "Hugging Face login" huggingface-cli login --token "$HF_TOKEN" --add-to-git-credential
 fi
 
-# --- Step 8: Offer a 'venv' alias (bash/zsh only, idempotent) ---
+# --- Step 9: Offer a 'venv' alias (bash/zsh only, idempotent) ---
 SHELL_NAME="$(basename "${SHELL:-}")"
 if [[ "$SHELL_NAME" == "zsh" ]]; then
   SHELL_RC="${ZDOTDIR:-$HOME}/.zshrc"
