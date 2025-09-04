@@ -1,64 +1,80 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run from repo root
-cd "$(dirname "$0")"
+# Installs DreamGaussian’s CUDA extensions without interactive git prompts.
+# It prefers unauthenticated ZIP downloads from codeload.github.com and falls
+# back to plain HTTPS git clones if needed.
 
-# Non-interactive git
-export GIT_TERMINAL_PROMPT=0
-export GIT_ASKPASS=
+# Repos & branches (both default to main)
+SIMPLE_KNN_REPO="ashawkey/simple-knn"
+DGR_REPO="ashawkey/diff-gaussian-rasterization"
+BRANCH="${1:-main}"
 
-# Helpful for L4/T4 (compute 8.9 / 7.5). Adjust if needed.
-: "${TORCH_CUDA_ARCH_LIST:=7.5;8.9}"
-export TORCH_CUDA_ARCH_LIST
+TMPDIR="$(mktemp -d)"
+cleanup() { rm -rf "$TMPDIR"; }
+trap cleanup EXIT
 
-have() { command -v "$1" >/dev/null 2>&1; }
+download_and_install_zip () {
+  local repo="$1"
+  local pkgname="$2"
+  local branch="$3"
 
-clone_or_zip_install () {
-  local REPO_URL="$1"   # e.g. https://github.com/ashawkey/simple-knn
-  local NAME="$2"       # e.g. simple-knn
-  local TMP_DIR
-  TMP_DIR="$(mktemp -d)"
+  local zip_url="https://codeload.github.com/${repo}/zip/refs/heads/${branch}"
+  local zip_file="${TMPDIR}/${pkgname}.zip"
+  local extract_dir="${TMPDIR}/${pkgname}"
 
-  echo "→ Installing ${NAME} …"
-
-  # Try a git clone with all auth disabled and headers cleared
-  if git \
-    -c credential.helper= \
-    -c http.https://github.com/.extraheader= \
-    -c url."https://github.com/".insteadof=git@github.com: \
-    -c url."https://github.com/".insteadof=ssh://git@github.com/ \
-    -c url."https://".insteadof=git:// \
-    clone --depth=1 "${REPO_URL}" "${TMP_DIR}/${NAME}"; then
-      python -m pip install --no-input "${TMP_DIR}/${NAME}"
-      rm -rf "${TMP_DIR}"
-      return 0
+  echo "→ Installing ${pkgname} via ZIP from ${zip_url}"
+  if curl -fL "$zip_url" -o "$zip_file"; then
+    mkdir -p "$extract_dir"
+    unzip -q "$zip_file" -d "$extract_dir"
+    # The extracted folder is REPO-BRANCH (e.g., simple-knn-main)
+    local inner_dir
+    inner_dir="$(find "$extract_dir" -maxdepth 1 -type d -name "*-${branch}" -print -quit)"
+    if [[ -z "${inner_dir:-}" ]]; then
+      echo "  ✖ Could not locate extracted folder for ${pkgname}"
+      return 1
+    fi
+    python -m pip install --no-input "$inner_dir"
+    echo "  ✓ ${pkgname} installed from ZIP"
+    return 0
   fi
-
-  echo "   git clone blocked; falling back to zip download…"
-
-  # Fallback: download the default branch zip via codeload
-  # (works with proxies that block git, still anonymous)
-  local ZIP_URL
-  ZIP_URL="${REPO_URL/https:\/\/github.com\//https:\/\/codeload.github.com\/}.zip/refs/heads/master"
-  # If master doesn’t exist, try main
-  if ! curl -fsSL -o "${TMP_DIR}/${NAME}.zip" "${ZIP_URL}"; then
-    ZIP_URL="${REPO_URL/https:\/\/github.com\//https:\/\/codeload.github.com\/}.zip/refs/heads/main"
-    curl -fsSL -o "${TMP_DIR}/${NAME}.zip" "${ZIP_URL}"
-  fi
-
-  unzip -q "${TMP_DIR}/${NAME}.zip" -d "${TMP_DIR}"
-  # folder will be NAME-<branch>
-  local EXTRACT_DIR
-  EXTRACT_DIR="$(find "${TMP_DIR}" -maxdepth 1 -type d -name "${NAME}-*" | head -n1)"
-  python -m pip install --no-input "${EXTRACT_DIR}"
-  rm -rf "${TMP_DIR}"
+  echo "  ✖ ZIP download failed for ${pkgname}"
+  return 1
 }
 
-# simple-knn
-clone_or_zip_install "https://github.com/ashawkey/simple-knn" "simple-knn"
+fallback_git_install () {
+  local repo="$1"
+  local pkgname="$2"
+  local branch="$3"
 
-# diff-gaussian-rasterization
-clone_or_zip_install "https://github.com/ashawkey/diff-gaussian-rasterization" "diff-gaussian-rasterization"
+  echo "→ ZIP failed; trying git clone for ${pkgname} …"
+  GIT_TERMINAL_PROMPT=0 GIT_ASKPASS= \
+  git -c credential.helper= \
+      -c url."https://github.com/".insteadof=git@github.com: \
+      -c url."https://github.com/".insteadof=ssh://git@github.com/ \
+      -c url."https://".insteadof=git:// \
+      clone --depth=1 --branch "$branch" "https://github.com/${repo}.git" "${TMPDIR}/${pkgname}"
 
-echo "✅ DreamGaussian CUDA extensions installed."
+  python -m pip install --no-input "${TMPDIR}/${pkgname}"
+  echo "  ✓ ${pkgname} installed via git clone"
+}
+
+echo "Checking nvcc for CUDA extension build…"
+if ! command -v nvcc >/dev/null 2>&1; then
+  echo "✖ 'nvcc' not found. Install CUDA toolkit and ensure nvcc is on PATH (needed to build extensions)."
+  exit 1
+fi
+
+echo "Compiling DreamGaussian CUDA extensions (branch: ${BRANCH})"
+
+# --- simple-knn ---
+if ! download_and_install_zip "$SIMPLE_KNN_REPO" "simple-knn" "$BRANCH"; then
+  fallback_git_install "$SIMPLE_KNN_REPO" "simple-knn" "$BRANCH"
+fi
+
+# --- diff-gaussian-rasterization ---
+if ! download_and_install_zip "$DGR_REPO" "diff-gaussian-rasterization" "$BRANCH"; then
+  fallback_git_install "$DGR_REPO" "diff-gaussian-rasterization" "$BRANCH"
+fi
+
+echo "✓ DreamGaussian CUDA deps installed."
