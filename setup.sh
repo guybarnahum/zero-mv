@@ -16,7 +16,7 @@ AUTO_YES=""
 for arg in "$@"; do
   case "$arg" in
     --yes|-y) AUTO_YES="--yes" ;;
-    t4_gpu) VARIANT="t4_gpu" ;;   # allow explicit arg
+    cuda_gpu) VARIANT="cuda_gpu" ;;   # allow explicit arg
     cpu) VARIANT="cpu" ;;         # allow explicit arg
     *) echo "Unknown option: $arg" >&2; exit 1 ;;
   esac
@@ -119,7 +119,12 @@ if [[ -z "${VARIANT:-}" ]]; then
   elif command -v nvidia-smi &>/dev/null; then
     gpu_name="$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -n1 || true)"
     echo "Detected GPU: ${gpu_name:-unknown}"
-    if [[ -n "$AUTO_YES" ]] || ask_yes_no "Use the GPU install ([t4_gpu])? [y/N]"; then VARIANT="t4_gpu"; else VARIANT="cpu"; fi
+    # Check for both T4 and L4 GPUs, as both can be used for CUDA
+    if [[ "$gpu_name" == *"T4"* ]] || [[ "$gpu_name" == *"L4"* ]]; then
+        if [[ -n "$AUTO_YES" ]] || ask_yes_no "Use the GPU install ([cuda_gpu])? [y/N]"; then VARIANT="cuda_gpu"; else VARIANT="cpu"; fi
+    else
+        VARIANT="cpu"
+    fi
   else
     VARIANT="cpu"
   fi
@@ -161,13 +166,13 @@ if [[ "$UNAME_S" == "Darwin" ]]; then
 else
   case "$VARIANT" in
     cpu)    install_torch_cpu ;;
-    t4_gpu) install_torch_gpu ;;
+    cuda_gpu) install_torch_gpu ;;
     *) echo "❌ Unknown variant '$VARIANT'"; exit 1 ;;
   esac
 fi
 
 # --- Step 6: Install DreamGaussian Dependencies and compile extensions ---
-if [[ "$VARIANT" == "t4_gpu" ]]; then
+if [[ "$VARIANT" == "cuda_gpu" ]]; then
     echo "DreamGaussian requires specific CUDA extensions. Checking for 'nvcc'..."
     if ! have nvcc; then
         echo "❌ 'nvcc' (the CUDA compiler) is not found. Please ensure the CUDA toolkit is installed and on your PATH to compile the necessary extensions."
@@ -178,7 +183,7 @@ if [[ "$VARIANT" == "t4_gpu" ]]; then
     
     run_and_log "Compiling DreamGaussian CUDA extensions" pip install "git+https://github.com/ashawkey/diff-gaussian-rasterization" "git+https://github.com/ashawkey/simple-knn"
 else
-    echo "Skipping Installing DreamGaussian for $VARIANT"
+    echo "Skipping DreamGaussian installation for CPU/macOS."
 fi
 
 # --- Step 7: Install project ---
