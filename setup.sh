@@ -179,9 +179,17 @@ if [[ "$VARIANT" == "cuda_gpu" ]]; then
         exit 1
     fi
     
-    run_and_log "Installing DreamGaussian dependencies (GPU)" pip install --no-input "einops>=0.7" "fire" "lpips" "plyfile" "scikit-image" "trimesh" "xatlas"   
-    run_and_log "Compiling DreamGaussian CUDA extensions" pip install --no-input --depth=1 "git+https://github.com/ashawkey/diff-gaussian-rasterization@8829d14f814fccdaf840b7b0f3021a616583c0a1" "git+https://github.com/ashawkey/simple-knn"
+    # Install DreamGaussian dependencies. The --no-input flag prevents pip from
+    # attempting to prompt for user credentials, which can happen with certain
+    # git configurations even for public repos.
+    run_and_log "Installing DreamGaussian dependencies (GPU)" pip install --no-input "einops>=0.7" "fire" "lpips" "plyfile" "scikit-image" "trimesh" "xatlas"
 
+    # Compile CUDA extensions. The sh -c command temporarily disables git's credential
+    # helper, preventing the "terminal prompts disabled" error during the git clone
+    # operation that pip performs internally. After installation, the credential helper
+    # is restored. This is the most reliable way to handle the issue in an automated script.
+    run_and_log "Compiling DreamGaussian CUDA extensions" sh -c "git config --global url.\"https://\".insteadOf git:// && git config --global credential.helper \"\" && pip install --no-input git+https://github.com/ashawkey/diff-gaussian-rasterization git+https://github.com/ashawkey/simple-knn && git config --global --unset credential.helper"
+    
     echo "Starting DreamGaussian validation..."
     run_and_log "Running validation script" python validate_dreamgaussian.py
 else
