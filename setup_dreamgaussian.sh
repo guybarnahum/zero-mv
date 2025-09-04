@@ -1,48 +1,62 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Non-interactive git (avoid "terminal prompts disabled")
-export GIT_TERMINAL_PROMPT=0
-export GIT_ASKPASS=
+# Installs DreamGaussian’s CUDA extensions from the official repo:
+#   https://github.com/dreamgaussian/dreamgaussian
+# We only build the native kernels (diff-gaussian-rasterization, simple-knn).
 
-# Use a temp workspace
-WORKDIR="$(mktemp -d)"
-echo "→ Working in $WORKDIR"
-cleanup() { rm -rf "$WORKDIR"; }
-trap cleanup EXIT
-
-cd "$WORKDIR"
-
-echo "→ Cloning diff-gaussian-rasterization (with submodules)…"
-# Prefer the canonical GraphDECO repos.
-git -c credential.helper= \
-    -c url."https://github.com/".insteadof=git@github.com: \
-    -c url."https://github.com/".insteadof=ssh://git@github.com/ \
-    -c url."https://".insteadof=git:// \
-    clone --recursive --depth=1 https://github.com/graphdeco-inria/diff-gaussian-rasterization dgr
-
-# If the submodule didn't materialize a simple-knn directory, fetch it explicitly.
-if [[ ! -d "dgr/simple-knn" && ! -d "simple-knn" ]]; then
-  echo "→ simple-knn submodule not found; cloning explicitly…"
-  git -c credential.helper= \
-      -c url."https://github.com/".insteadof=git@github.com: \
-      -c url."https://github.com/".insteadof=ssh://git@github.com/ \
-      -c url."https://".insteadof=git:// \
-      clone --depth=1 https://github.com/graphdeco-inria/simple-knn simple-knn
-  SIMPLE_KNN_PATH="simple-knn"
-else
-  # Prefer submodule inside dgr if present
-  if [[ -d "dgr/simple-knn" ]]; then
-    SIMPLE_KNN_PATH="dgr/simple-knn"
-  else
-    SIMPLE_KNN_PATH="simple-knn"
-  fi
+# --- prerequisites ---
+if ! command -v nvcc >/dev/null 2>&1; then
+  echo "❌ nvcc (CUDA toolkit) not found on PATH. Install CUDA to build DreamGaussian extensions."
+  exit 1
 fi
 
-echo "→ Installing simple-knn from: $SIMPLE_KNN_PATH"
-python -m pip install --no-input "$SIMPLE_KNN_PATH"
+# Keep venv python/pip
+PYTHON_BIN="${PYTHON_BIN:-python}"
+PIP_BIN="${PIP_BIN:-python -m pip}"
 
-echo "→ Installing diff-gaussian-rasterization…"
-python -m pip install --no-input ./dgr
+# Temp workspace
+WG=$(mktemp -d 2>/dev/null || mktemp -d -t dreamgaussian)
+cleanup() { rm -rf "$WG"; }
+trap cleanup EXIT
+
+echo "→ Working dir: $WG"
+
+# Disable any interactive git credentials; force HTTPS
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=
+GIT_ARGS=(-c credential.helper= -c url."https://github.com/".insteadof=git@github.com:
+          -c url."https://github.com/".insteadof=ssh://git@github.com/
+          -c url."https://".insteadof=git://)
+
+echo "→ Cloning dreamgaussian/dreamgaussian (recursive)…"
+git "${GIT_ARGS[@]}" clone --recursive --depth=1 https://github.com/dreamgaussian/dreamgaussian "$WG/dreamgaussian"
+
+# In case submodules weren’t pulled by the shallow clone, ensure they’re present
+(
+  cd "$WG/dreamgaussian"
+  git submodule update --init --recursive || true
+)
+
+# Paths to extensions (as in the official repo layout)
+DGR_DIR="$WG/dreamgaussian/diff-gaussian-rasterization"
+SKNN_DIR="$WG/dreamgaussian/simple-knn"
+
+# Sanity checks and install each if present
+if [[ -d "$DGR_DIR" ]]; then
+  echo "→ Building diff-gaussian-rasterization …"
+  $PIP_BIN install --no-input "$DGR_DIR"
+else
+  echo "⚠️  diff-gaussian-rasterization directory not found under dreamgaussian."
+  echo "    Please check the repo layout or open an issue if this persists."
+fi
+
+if [[ -d "$SKNN_DIR" ]]; then
+  echo "→ Building simple-knn …"
+  $PIP_BIN install --no-input "$SKNN_DIR"
+else
+  echo "⚠️  simple-knn directory not found under dreamgaussian."
+  echo "    Please check the repo layout or open an issue if this persists."
+fi
 
 echo "✅ DreamGaussian CUDA extensions installed."
