@@ -31,7 +31,7 @@ Zero123++ v1.2 produces a **fixed rig of 6 views** (azimuths: 30°, 90°, 150°,
 <img src="examples/person.jpg" width="51.225%"/><img src="examples/person_results2.png" width="48.775%"/>
 
 <details>
-<summary><h1>More Examples > </h1></summary>
+<summary><h1>More Examples</h1></summary>
 
 ### Home → 6 poses
 <img src="examples/home.jpeg" width="100%"/>
