@@ -1,5 +1,14 @@
 set -e
 
+# --- quiet/sane build env ---
+# turns off pip’s own chatter
+export PIP_DISABLE_PIP_VERSION_CHECK=1
+# silence most Python warnings printed via the warnings module
+export PYTHONWARNINGS="ignore"
+# hush some setuptools deprecation noise
+export SETUPTOOLS_SILENCE_DEPRECATION_WARNING=1
+export SETUPTOOLS_ENABLE_FEATURES="legacy-editable"
+
 REPO_DIR="external/dreamgaussian"
 DGR_DIR="external/diff-gaussian-rasterization"
 
