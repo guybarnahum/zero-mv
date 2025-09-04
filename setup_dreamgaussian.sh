@@ -1,51 +1,52 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Where to clone DreamGaussian (can override with DG_DIR env var)
-DG_DIR="${DG_DIR:-external/dreamgaussian}"
+# Use the same Python as your venv
+PY="${PYTHON:-python}"
 
-# Ensure we're using the current venv's python/pip
-PY="${PYTHON:-$(command -v python)}"
+echo "→ Using python: $($PY -c 'import sys;print(sys.executable)')"
 
-echo "→ Using python: $($PY -c 'import sys; print(sys.executable)')"
+# Where to put the repo (relative to project root)
+DG_DIR="external/dreamgaussian"
+mkdir -p external
 
-# 1) Clone the official DreamGaussian repo if not present
 if [[ ! -d "$DG_DIR/.git" ]]; then
   echo "→ Cloning DreamGaussian into: $DG_DIR"
-  mkdir -p "$(dirname "$DG_DIR")"
   git clone --recursive https://github.com/dreamgaussian/dreamgaussian "$DG_DIR"
 else
-  echo "→ DreamGaussian already present at: $DG_DIR"
+  echo "→ DreamGaussian already present; pulling latest"
+  (cd "$DG_DIR" && git pull --rebase && git submodule update --init --recursive)
 fi
 
-# 2) Install the two local subpackages inside the venv
-#    These build the CUDA/C++ extensions so that
-#    `import diff_gaussian_rasterization` works.
+# Core Python deps (many are already in your env; harmless if reinstall)
+$PY -m pip install --no-input -r "$DG_DIR/requirements.txt"
+
+# Ensure toolchain bits
+$PY -m pip install --no-input ninja cmake
+
+# For Ada Lovelace (L4), set arch if not set; adjust if you have a different GPU
+export TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-8.9}"
+
+# Avoid PEP 517 build isolation so torch is visible during build
+export PIP_NO_BUILD_ISOLATION=1
+
 echo "→ Installing simple-knn …"
-"$PY" -m pip install --no-input -e "$DG_DIR/simple-knn"
+$PY -m pip install --no-input "$DG_DIR/simple-knn"
 
 echo "→ Installing diff-gaussian-rasterization …"
-"$PY" -m pip install --no-input -e "$DG_DIR/diff-gaussian-rasterization"
+$PY -m pip install --no-input "$DG_DIR/diff-gaussian-rasterization"
 
-# 3) Quick import sanity check (same interpreter)
-echo "→ Verifying imports …"
-"$PY" - <<'PY'
+# Quick import check
+cat > /tmp/_dg_import_check.py <<'PY'
 import sys
-print("sys.executable =", sys.executable)
-import torch
-print("CUDA available:", torch.cuda.is_available())
-try:
-    import diff_gaussian_rasterization as dgr
-    print("OK: diff_gaussian_rasterization loaded:", dgr.__file__)
-except Exception as e:
-    print("FAIL: could not import diff_gaussian_rasterization:", e)
-    raise SystemExit(1)
-try:
-    import simple_knn
-    print("OK: simple_knn loaded:", getattr(simple_knn, "__file__", "<built-in>"))
-except Exception as e:
-    print("FAIL: could not import simple_knn:", e)
-    raise SystemExit(1)
+err = 0
+for m in ("torch","simple_knn","diff_gaussian_rasterization"):
+    try:
+        __import__(m)
+        print(f"[ok] import {m}")
+    except Exception as e:
+        print(f"[fail] import {m}: {e}", file=sys.stderr)
+        err = 1
+sys.exit(err)
 PY
-
-echo "✅ DreamGaussian CUDA extensions installed."
+$PY /tmp/_dg_import_check.py
