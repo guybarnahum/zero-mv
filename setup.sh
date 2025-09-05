@@ -193,7 +193,8 @@ if [[ "$VARIANT" == "cuda_gpu" ]]; then
     fi
 
 else
-    echo "Skipping DreamGaussian installation for CPU/macOS."
+    echo "No compatible GPU detected. DreamGaussian relies on a CUDA-enabled NVIDIA GPU for its C++ and CUDA extensions."
+    echo "Since this system is not compatible, the DreamGaussian installation is not possible and will be skipped to prevent errors."
 fi
 
 # --- Step 7: Install project ---
